@@ -1,0 +1,282 @@
+// Load model
+load_file("IF4rNetwork.hoc")
+tstop=150
+
+// Stop on reaching threshold
+objref watchIF
+watchIF=new NetCon(IF[0],nil,1,0,0)
+watchIF.record("stoprun=1 print \"Stoprun\"")
+
+// Create dialog for changing colors
+objref myDialog
+myDialog= new VBox()
+
+
+init()
+
+
+IF_E=0.1
+IF_I2=-0.1
+
+proc scanplus(){
+    for (j0=-0.10;j0<=0;j0=j0+0.025) {
+        for (myI2=-0.2;myI2<=0;myI2=myI2+0.05) {
+            if(j0==0 && myI2==-0.15){
+                //myDialog.dialog("Pick new color!")
+                }
+            
+            IF_I2=myI2/IF[1].ai2
+            IF_E=(mderiv0+m0/IF[1].taum-myI2)/IF[1].ae
+            print IF_E
+            print "I: ",IF_E*IF[1].ae+myI2-m0/IF[1].taum
+                  
+            if(IF_E <0){
+                myDialog.dialog("IF_E <0")
+            }
+        
+            if(IF_I2 >0){
+                myDialog.dialog("IF_I2 >0")
+            }
+            
+            run()
+        }
+        
+     }
+}
+
+proc scanminus(){
+    for (j0=-0.10;j0<=0;j0=j0+0.025) {
+        for (myE=0.2;myE>=0;myE=myE-0.05) {
+            if(j0==0 && myE==0.15){
+                //myDialog.dialog("Pick new color!")
+                }
+            IF_E=myE/IF[1].ae
+            IF_I2=(mderiv0+m0/IF[1].taum-myE)/IF[1].ai2
+            print "I: ",IF_E*IF[1].ae+myI2-m0/IF[1].taum
+            
+            if(IF_E <0){
+                myDialog.dialog("IF_E <0")
+            }
+        
+            if(IF_I2 >0){
+                myDialog.dialog("IF_I2 >0")
+            }
+            run()
+        }
+        
+     }
+}
+
+
+proc init() {
+		finitialize(v_init)
+		// insert new initialization code here to change states
+		// If states have been changed then complete
+		// initialization with
+	    setIF(IF[0],IF_E,0,IF_I2,m0)
+        setIF(IF[1],IF_E,j0,IF_I2,m0)	
+		if (cvode.active()) {
+			cvode.re_init()
+		}else{
+			fcurrent()
+		}
+		frecord_init()
+	    
+	}
+
+//===============================================================
+
+proc makeplusplus(){
+    Vmgraph.exec_menu("Erase")
+    Imgraph.exec_menu("Erase")
+    ISynGraph.exec_menu("Erase")
+    
+    m0=0.5
+    mderiv0=0.25
+    j0=0
+    
+    tstart=0
+    if(shortsim==1){
+        tstop=(4-m0)/mderiv0
+    }else{
+        tstop=150
+    }
+    
+    
+    Vmgraph.beginline(2, 1)
+    Vmgraph.line(0, m0)
+    Vmgraph.line((1.25-m0)/mderiv0, 1.25)
+    
+    Vmgraph.beginline(2, 2)
+    Vmgraph.line(0, 1)
+    Vmgraph.line(tstop, 1)
+    Vmgraph.size(tstart, tstop,-0.2 , 1.3)
+    Vmgraph.flush()
+    
+    Imgraph.beginline(2,2)
+    Imgraph.line((1-m0)/mderiv0,-0.2)
+    Imgraph.line((1-m0)/mderiv0,0.3)
+    Imgraph.size(tstart, tstop,-0.1 , 0.3)
+    Imgraph.flush()
+    
+    
+    ISynGraph.beginline(2,2)
+    ISynGraph.line((1-m0)/mderiv0,-0.2)
+    ISynGraph.line((1-m0)/mderiv0,0.3)
+    ISynGraph.size(tstart, tstop,-0.1 , 0.3)
+    ISynGraph.flush()
+    
+    scanplus()
+    
+    if(createplots==1){
+        if (shortsim==1){
+            Imgraph.printfile("IM++S.eps") 
+            Vmgraph.printfile("VM++S.eps") 
+            ISynGraph.printfile("ISynM++S.eps")
+        }else{
+            Imgraph.printfile("IM++L.eps") 
+            Vmgraph.printfile("VM++L.eps") 
+            ISynGraph.printfile("ISynM++L.eps")
+        }
+    }
+    
+}
+//==============================================================
+proc makeplusminus(){
+    Vmgraph.exec_menu("Erase")
+    Imgraph.exec_menu("Erase")
+    ISynGraph.exec_menu("Erase")
+    
+    m0=-0.5
+    mderiv0=0.7
+    j0=0
+    
+    tstart=0
+    if(shortsim==1){
+        tstop=(4-m0)/mderiv0
+    }else{
+        tstop=150
+    }
+    
+    Vmgraph.beginline(2, 2)
+    Vmgraph.line(0, m0)
+    Vmgraph.line((2-m0)/mderiv0, 2)
+    
+    Vmgraph.beginline(2, 5)
+    Vmgraph.line(0, 1)
+    Vmgraph.line(tstop, 1)
+    Vmgraph.size(tstart,tstop,-1 ,  1.1)
+    Vmgraph.flush()
+    
+    Imgraph.beginline(2,2)
+    Imgraph.line((1-m0)/mderiv0,-0.1)
+    Imgraph.line((1-m0)/mderiv0,0.7)
+    Imgraph.size(tstart,tstop,-0.1 ,  0.7)
+    Imgraph.flush()
+     
+    ISynGraph.beginline(2,2)
+    ISynGraph.line((1-m0)/mderiv0,-0.1)
+    ISynGraph.line((1-m0)/mderiv0,0.7)
+    ISynGraph.size(tstart, tstop,-0.1 , 0.7)
+    ISynGraph.flush()
+    
+    scanplus()
+    
+    doNotify()
+    if(createplots==1){
+        if (shortsim==1){
+            Imgraph.printfile("IM+-S.eps") 
+            Vmgraph.printfile("VM+-S.eps") 
+            ISynGraph.printfile("ISynM+-S.eps")
+        }else{
+            Imgraph.printfile("IM+-L.eps") 
+            Vmgraph.printfile("VM+-L.eps") 
+            ISynGraph.printfile("ISynM+-L.eps")
+        }
+    }
+
+}
+
+
+//==============================================================
+proc makeminusplus(){
+    Vmgraph.exec_menu("Erase")
+    Imgraph.exec_menu("Erase")
+    ISynGraph.exec_menu("Erase")
+    
+    m0=0.5
+    mderiv0=-0.25
+    j0=0
+    
+    if(shortsim==1){
+        tstop=-(4-m0)/mderiv0
+    }else{
+        tstop=150
+    }
+    Imgraph[0].size(0,tstop,-0.3 ,  0.1)
+    ISynGraph.size(0,tstop,-0.3 ,  0.1)
+    Vmgraph[0].size(0,tstop,-2 ,  0.5)
+   
+    scanminus()
+    
+    
+    
+   if(createplots==1){
+        if (shortsim==1){
+            Imgraph.printfile("IM-+S.eps") 
+            Vmgraph.printfile("VM-+S.eps")
+            ISynGraph.printfile("ISynM-+S.eps")
+        }else{
+            Imgraph.printfile("IM-+L.eps") 
+            Vmgraph.printfile("VM-+L.eps")
+            ISynGraph.printfile("ISynM-+L.eps")
+        }
+    }
+}
+//==============================================================
+proc makeminusminus(){
+    Vmgraph.exec_menu("Erase")
+    Imgraph.exec_menu("Erase")
+    ISynGraph.exec_menu("Erase")
+    
+    Imgraph.size(0,60,-0.25 ,  0.1)
+    ISynGraph.size(0,60,-0.25 ,  0.1)
+    Vmgraph.size(0,150,-1.8 ,  0)
+    
+    m0=-0.5
+    mderiv0=-0.25
+    j0=0
+    
+    if(shortsim==1){
+        tstop=-(4-m0)/mderiv0
+    }else{
+        tstop=150
+    }
+
+    scanminus()
+    
+    if(createplots==1){
+        if (shortsim==1){
+            Imgraph.printfile("IM--S.eps") 
+            Vmgraph.printfile("VM--S.eps") 
+            ISynGraph.printfile("ISynM--S.eps")
+        }else{
+            Imgraph.printfile("IM--L.eps") 
+            Vmgraph.printfile("VM--L.eps") 
+            ISynGraph.printfile("ISynM--L.eps")
+        }
+    }
+}
+// Bring up control panel
+
+createplots=0 
+shortsim=1
+
+xpanel("Select Plot")
+    xbutton("++","makeplusplus()")
+    xbutton("+-","makeplusminus()")
+    xbutton("-+","makeminusplus()")
+    xbutton("--","makeminusminus()")
+    xcheckbox("Create Plots", &createplots)
+    xcheckbox("Short Simulation",&shortsim)
+xpanel()
